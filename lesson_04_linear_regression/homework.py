@@ -1,25 +1,39 @@
 """
 Lesson 04 Homework: Linear Regression from Scratch
 ====================================================
-Complete the TODOs to train a linear regression model.
+Complete the TODOs to train a linear regression model on real data.
+
+Dataset: California Housing (from sklearn)
+  - Feature: HouseAge (median house age in a block group)
+  - Target: MedHouseVal (median house value in $100,000s)
 """
 
 import torch
+from sklearn.datasets import fetch_california_housing
 
 torch.manual_seed(123)
 
 # ============================================================
-# Exercise 1: Generate Data
+# Exercise 1: Load and Prepare Data
 # ============================================================
 
-# True relationship: y = -1.5 * x + 7 (with noise)
+data = fetch_california_housing()
 
-# TODO: Create X with 80 random samples in range [0, 5]
-#       Shape should be [80, 1]
+# Use feature index 1 (HouseAge) to predict house value
+feature_idx = 1
+
+# TODO: Extract the feature and target as float32 tensors, shape [N, 1]
+#       Use first 150 samples only
+X_raw = None
+y_raw = None
+
+# TODO: Normalize X and y (subtract mean, divide by std)
+#       Store the means and stds for later use
+X_mean = None
+X_std = None
+y_mean = None
+y_std = None
 X = None
-
-# TODO: Create y using the true relationship plus small noise
-#       y = -1.5 * X + 7 + noise (use torch.randn for noise, scale=0.3)
 y = None
 
 # ============================================================
@@ -36,8 +50,8 @@ b = None
 # Exercise 3: Training Loop
 # ============================================================
 
-learning_rate = 0.05
-num_epochs = 500
+learning_rate = 0.1
+num_epochs = 200
 
 # TODO: Implement the training loop
 # For each epoch:
@@ -54,22 +68,22 @@ for epoch in range(num_epochs):
 # Exercise 4: Evaluate
 # ============================================================
 
-# TODO: Store the final values of w and b
-final_w = None  # should be close to -1.5
-final_b = None  # should be close to 7.0
+# TODO: Store the final loss value
+final_loss = None
 
 # ============================================================
 # Validation
 # ============================================================
 print("\n--- Checking your answers ---")
 
-assert X is not None and X.shape == (80, 1), "Exercise 1: X shape should be [80, 1]"
-assert y is not None and y.shape == (80, 1), "Exercise 1: y shape should be [80, 1]"
-assert final_w is not None, "Exercise 4: final_w not set"
-assert final_b is not None, "Exercise 4: final_b not set"
-assert abs(final_w - (-1.5)) < 0.2, f"w should be ~-1.5, got {final_w:.4f}"
-assert abs(final_b - 7.0) < 0.5, f"b should be ~7.0, got {final_b:.4f}"
+assert X is not None and X.shape == (150, 1), "Exercise 1: X shape should be [150, 1]"
+assert y is not None and y.shape == (150, 1), "Exercise 1: y shape should be [150, 1]"
+assert w is not None and w.requires_grad, "Exercise 2: w not set or no grad"
+assert b is not None and b.requires_grad, "Exercise 2: b not set or no grad"
+assert final_loss is not None, "Exercise 4: final_loss not set"
+assert final_loss < 1.0, f"Loss should be < 1.0 after training, got {final_loss:.4f}"
 
-print(f"Learned w: {final_w:.4f} (true: -1.5)")
-print(f"Learned b: {final_b:.4f} (true: 7.0)")
+print(f"Learned w: {w.item():.4f}")
+print(f"Learned b: {b.item():.4f}")
+print(f"Final loss: {final_loss:.4f}")
 print("All exercises passed!")

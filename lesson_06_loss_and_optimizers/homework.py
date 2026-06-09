@@ -35,14 +35,25 @@ loss_fn_ce = None
 ce_value = None
 
 # ============================================================
-# Exercise 3: Train a Model
+# Exercise 3: Train a Model on Real Data
 # ============================================================
+
+from sklearn.datasets import fetch_california_housing
 
 torch.manual_seed(99)
 
-# Data: y = -2x + 5
-X = torch.rand(60, 1) * 8
-y = -2 * X + 5 + torch.randn(60, 1) * 0.3
+# Load California Housing: predict house value from Population
+housing = fetch_california_housing()
+feature_idx = 4  # Population
+
+X_raw = torch.tensor(housing.data[:200, feature_idx], dtype=torch.float32).unsqueeze(1)
+y_raw = torch.tensor(housing.target[:200], dtype=torch.float32).unsqueeze(1)
+
+# Normalize
+X_mean, X_std = X_raw.mean(), X_raw.std()
+y_mean, y_std = y_raw.mean(), y_raw.std()
+X = (X_raw - X_mean) / X_std
+y = (y_raw - y_mean) / y_std
 
 # TODO: Create a Linear model (1 input, 1 output)
 model = None
@@ -50,11 +61,11 @@ model = None
 # TODO: Create MSE loss function
 loss_fn = None
 
-# TODO: Create an SGD optimizer with lr=0.005
+# TODO: Create an SGD optimizer with lr=0.01
 optimizer = None
 
-# TODO: Train for 2000 epochs
-for epoch in range(2000):
+# TODO: Train for 200 epochs
+for epoch in range(200):
     pass  # TODO: Implement training step
     # 1. Forward pass
     # 2. Compute loss
@@ -63,8 +74,8 @@ for epoch in range(2000):
     # 5. Optimizer step
 
 # TODO: Store final weight and bias
-final_weight = None  # should be close to -2.0
-final_bias = None    # should be close to 5.0
+final_weight = None
+final_bias = None
 
 # ============================================================
 # Validation
@@ -79,10 +90,15 @@ assert ce_value.item() < 0.5, f"Exercise 2: CE should be low (model is correct),
 
 assert final_weight is not None, "Exercise 3: final_weight not set"
 assert final_bias is not None, "Exercise 3: final_bias not set"
-assert abs(final_weight - (-2.0)) < 0.3, f"Exercise 3: weight should be ~-2.0, got {final_weight:.4f}"
-assert abs(final_bias - 5.0) < 0.6, f"Exercise 3: bias should be ~5.0, got {final_bias:.4f}"
+
+# After training on normalized data, the loss should have decreased
+with torch.no_grad():
+    y_pred = model(X)
+    final_loss = nn.MSELoss()(y_pred, y).item()
+assert final_loss < 1.0, f"Exercise 3: loss should be < 1.0, got {final_loss:.4f}"
 
 print(f"MSE: {mse_value.item():.4f}")
 print(f"CE: {ce_value.item():.4f}")
-print(f"Learned: y = {final_weight:.3f}*x + {final_bias:.3f}")
+print(f"Learned: y_norm = {final_weight:.3f}*x_norm + {final_bias:.3f}")
+print(f"Final loss: {final_loss:.4f}")
 print("All exercises passed!")

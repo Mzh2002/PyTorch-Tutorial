@@ -1,10 +1,12 @@
 """
 Lesson 07 Answer: Building a Training Loop
 ============================================
+Dataset: Diabetes (from sklearn) — 10 features → disease progression
 """
 
 import torch
 import torch.nn as nn
+from sklearn.datasets import load_diabetes
 
 torch.manual_seed(7)
 
@@ -12,22 +14,35 @@ torch.manual_seed(7)
 # Exercise 1: Prepare Data
 # ============================================================
 
-num_samples = 300
-X = torch.randn(num_samples, 2)
-y = X[:, 0:1] ** 2 + 2 * X[:, 1:2] + torch.randn(num_samples, 1) * 0.1
+diabetes = load_diabetes()
+X_np = diabetes.data
+y_np = diabetes.target
+
+X_all = torch.tensor(X_np, dtype=torch.float32)
+y_all = torch.tensor(y_np, dtype=torch.float32).unsqueeze(1)
+
+X_mean, X_std = X_all.mean(dim=0), X_all.std(dim=0)
+y_mean, y_std = y_all.mean(), y_all.std()
+X_data = (X_all - X_mean) / X_std
+y_data = (y_all - y_mean) / y_std
+
+num_samples = X_data.shape[0]
 
 n_train = int(0.8 * num_samples)
-X_train = X[:n_train]
-X_val = X[n_train:]
-y_train = y[:n_train]
-y_val = y[n_train:]
+X_train = X_data[:n_train]
+X_val = X_data[n_train:]
+y_train = y_data[:n_train]
+y_val = y_data[n_train:]
+
+print(f"Dataset: Diabetes ({num_samples} samples, 10 features)")
+print(f"Train: {X_train.shape[0]}, Val: {X_val.shape[0]}")
 
 # ============================================================
 # Exercise 2: Define Model
 # ============================================================
 
 model = nn.Sequential(
-    nn.Linear(2, 32),
+    nn.Linear(10, 32),
     nn.ReLU(),
     nn.Linear(32, 16),
     nn.ReLU(),
@@ -39,7 +54,7 @@ model = nn.Sequential(
 # ============================================================
 
 loss_fn = nn.MSELoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=0.01)
+optimizer = torch.optim.Adam(model.parameters(), lr=0.01, weight_decay=0.01)
 
 num_epochs = 200
 train_losses = []
@@ -79,12 +94,12 @@ final_val_loss = val_losses[-1]
 # ============================================================
 print("\n--- Checking answers ---")
 
-assert n_train == 240
-assert X_train.shape == (240, 2)
-assert X_val.shape == (60, 2)
+assert n_train == int(0.8 * num_samples)
+assert X_train.shape[1] == 10
+assert X_val.shape[1] == 10
 assert len(train_losses) == num_epochs
 assert final_train_loss < 0.5
-assert final_val_loss < 1.0
+assert final_val_loss < 1.5
 
 print(f"Final train loss: {final_train_loss:.4f}")
 print(f"Final val loss: {final_val_loss:.4f}")

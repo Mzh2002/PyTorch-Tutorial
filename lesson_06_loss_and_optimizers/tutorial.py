@@ -120,16 +120,30 @@ print(f"\nUpdated weight: {model.weight.item():.4f}")
 print(f"Updated bias: {model.bias.item():.4f}")
 
 # ============================================================
-# 4. Complete Training Example
+# 4. Complete Training Example with Real Data
 # ============================================================
 
-print("\n=== Training Linear Regression with nn.Module ===\n")
+print("\n=== Training on California Housing Data ===\n")
+
+from sklearn.datasets import fetch_california_housing
 
 torch.manual_seed(42)
 
-# Generate data: y = 3x - 2
-X = torch.rand(50, 1) * 10
-y = 3 * X - 2 + torch.randn(50, 1) * 0.5
+# Load real data: predict house value from AveRooms (average rooms per household)
+housing = fetch_california_housing()
+feature_idx = 2  # AveRooms
+
+X_raw = torch.tensor(housing.data[:300, feature_idx], dtype=torch.float32).unsqueeze(1)
+y_raw = torch.tensor(housing.target[:300], dtype=torch.float32).unsqueeze(1)
+
+# Normalize for stable training
+X_mean, X_std = X_raw.mean(), X_raw.std()
+y_mean, y_std = y_raw.mean(), y_raw.std()
+X = (X_raw - X_mean) / X_std
+y = (y_raw - y_mean) / y_std
+
+print(f"Feature: {housing.feature_names[feature_idx]} (avg rooms per household)")
+print(f"Samples: {X.shape[0]}")
 
 # Model, loss, optimizer
 model = nn.Linear(1, 1)
@@ -150,5 +164,5 @@ for epoch in range(100):
     if (epoch + 1) % 25 == 0:
         print(f"Epoch {epoch+1}: loss={loss.item():.4f}")
 
-print(f"\nLearned: y = {model.weight.item():.3f}*x + {model.bias.item():.3f}")
-print(f"True:    y = 3.000*x + -2.000")
+print(f"\nLearned: y_norm = {model.weight.item():.3f}*x_norm + {model.bias.item():.3f}")
+print(f"(These are on normalized data; de-normalize for real-world interpretation)")

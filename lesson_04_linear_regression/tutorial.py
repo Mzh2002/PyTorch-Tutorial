@@ -3,29 +3,58 @@ Lesson 04: Linear Regression from Scratch
 ===========================================
 We implement linear regression using only tensors and autograd —
 no nn.Module yet. This shows how gradient descent works at the lowest level.
+
+Dataset: California Housing (from sklearn)
+  - Feature: MedInc (median income in a block group)
+  - Target: MedHouseVal (median house value in $100,000s)
 """
 
 import torch
+from sklearn.datasets import fetch_california_housing
 
 # ============================================================
-# 1. Generate Synthetic Data
+# 1. Load Real Data — California Housing
 # ============================================================
 
-# True relationship: y = 2*x + 3 (with some noise)
-torch.manual_seed(42)
+# fetch_california_housing downloads the dataset from the internet
+data = fetch_california_housing()
 
-X = torch.rand(100, 1) * 10          # 100 samples, x in [0, 10]
-noise = torch.randn(100, 1) * 0.5    # small Gaussian noise
-y = 2 * X + 3 + noise                # true: weight=2, bias=3
+# Use a single feature: MedInc (median income)
+# This keeps the problem simple for learning gradient descent
+feature_idx = 0  # MedInc
+X_raw = torch.tensor(data.data[:, feature_idx], dtype=torch.float32).unsqueeze(1)
+y_raw = torch.tensor(data.target, dtype=torch.float32).unsqueeze(1)
 
-print(f"X shape: {X.shape}")
-print(f"y shape: {y.shape}")
-print(f"First 5 samples:")
+print(f"Dataset: California Housing")
+print(f"Feature: {data.feature_names[feature_idx]} (median income)")
+print(f"Target: Median house value ($100K)")
+print(f"Total samples: {X_raw.shape[0]}")
+
+# Use first 200 samples for a manageable training set
+X_subset = X_raw[:200]
+y_subset = y_raw[:200]
+
+# ============================================================
+# 2. Normalize Data
+# ============================================================
+
+# Normalizing helps gradient descent converge faster
+X_mean, X_std = X_subset.mean(), X_subset.std()
+y_mean, y_std = y_subset.mean(), y_subset.std()
+
+X = (X_subset - X_mean) / X_std
+y = (y_subset - y_mean) / y_std
+
+print(f"\nUsing {X.shape[0]} samples (normalized)")
+print(f"X range: [{X.min().item():.2f}, {X.max().item():.2f}]")
+print(f"y range: [{y.min().item():.2f}, {y.max().item():.2f}]")
+
+print(f"\nFirst 5 samples (normalized):")
 for i in range(5):
-    print(f"  x={X[i].item():.2f}, y={y[i].item():.2f}")
+    print(f"  income={X[i].item():.3f}, value={y[i].item():.3f}")
 
 # ============================================================
-# 2. Initialize Parameters
+# 3. Initialize Parameters
 # ============================================================
 
 # We want to learn: y_pred = w * x + b
@@ -37,7 +66,7 @@ print(f"\nInitial w: {w.item():.4f}")
 print(f"Initial b: {b.item():.4f}")
 
 # ============================================================
-# 3. Define Forward Pass (Prediction)
+# 4. Define Forward Pass (Prediction)
 # ============================================================
 
 
@@ -47,7 +76,7 @@ def forward(X):
 
 
 # ============================================================
-# 4. Define Loss Function (Mean Squared Error)
+# 5. Define Loss Function (Mean Squared Error)
 # ============================================================
 
 
@@ -57,10 +86,10 @@ def mse_loss(y_pred, y_true):
 
 
 # ============================================================
-# 5. Training Loop
+# 6. Training Loop
 # ============================================================
 
-learning_rate = 0.01
+learning_rate = 0.1
 num_epochs = 100
 
 print("\n--- Training ---")
@@ -89,20 +118,23 @@ for epoch in range(num_epochs):
               f"w={w.item():.4f}, b={b.item():.4f}")
 
 # ============================================================
-# 6. Check Results
+# 7. Check Results
 # ============================================================
 
 print("\n--- Results ---")
-print(f"Learned w: {w.item():.4f} (true: 2.0)")
-print(f"Learned b: {b.item():.4f} (true: 3.0)")
+print(f"Learned w: {w.item():.4f}")
+print(f"Learned b: {b.item():.4f}")
+print(f"Final loss: {loss.item():.4f}")
 
-# Make predictions on new data
-x_test = torch.tensor([[1.0], [5.0], [10.0]])
+# Make predictions and convert back to original scale
 with torch.no_grad():
-    y_test = forward(x_test)
-    print("\nPredictions:")
-    for i in range(len(x_test)):
-        expected = 2 * x_test[i].item() + 3
-        print(f"  x={x_test[i].item():.1f}: "
-              f"predicted={y_test[i].item():.2f}, "
-              f"expected={expected:.2f}")
+    # Predict on a few test incomes
+    test_incomes = torch.tensor([[3.0], [5.0], [8.0]])  # raw MedInc values
+    test_normalized = (test_incomes - X_mean) / X_std
+    pred_normalized = forward(test_normalized)
+    pred_values = pred_normalized * y_std + y_mean
+
+    print("\nPredictions (median house value in $100K):")
+    for i in range(len(test_incomes)):
+        print(f"  Income={test_incomes[i].item():.1f} -> "
+              f"Value=${pred_values[i].item() * 100:.0f}K")

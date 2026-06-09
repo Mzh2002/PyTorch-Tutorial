@@ -3,10 +3,13 @@ Lesson 07: Building a Training Loop
 =====================================
 A proper training loop is the core of any deep learning project.
 This lesson shows the standard pattern used in practice.
+
+Dataset: California Housing (from sklearn) — 8 features → house value
 """
 
 import torch
 import torch.nn as nn
+from sklearn.datasets import fetch_california_housing
 
 # ============================================================
 # 1. The Standard Training Loop Pattern
@@ -25,22 +28,31 @@ import torch.nn as nn
 # 2. Full Example: Multi-feature Regression
 # ============================================================
 
-print("=== Multi-feature Regression ===\n")
+print("=== Multi-feature Regression on California Housing ===\n")
 
 torch.manual_seed(42)
 
-# Generate data with 3 features
-# True relationship: y = 2*x1 + 3*x2 - 1*x3 + 0.5
-num_samples = 200
-X = torch.randn(num_samples, 3)
-true_weights = torch.tensor([[2.0, 3.0, -1.0]])
-true_bias = torch.tensor([0.5])
-y = X @ true_weights.T + true_bias + torch.randn(num_samples, 1) * 0.2
+# Load real data with all 8 features
+housing = fetch_california_housing()
+X_np = housing.data[:500]   # use 500 samples for speed
+y_np = housing.target[:500]
 
-print(f"Data: {X.shape[0]} samples, {X.shape[1]} features")
+X_all = torch.tensor(X_np, dtype=torch.float32)
+y_all = torch.tensor(y_np, dtype=torch.float32).unsqueeze(1)
+
+# Normalize features and target
+X_mean, X_std = X_all.mean(dim=0), X_all.std(dim=0)
+y_mean, y_std = y_all.mean(), y_all.std()
+X = (X_all - X_mean) / X_std
+y = (y_all - y_mean) / y_std
+
+num_samples = X.shape[0]
+print(f"Dataset: California Housing")
+print(f"Features: {housing.feature_names}")
+print(f"Data: {num_samples} samples, {X.shape[1]} features")
 
 # Model
-model = nn.Linear(3, 1)
+model = nn.Linear(8, 1)
 loss_fn = nn.MSELoss()
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 
@@ -80,10 +92,8 @@ for epoch in range(num_epochs):
     if (epoch + 1) % 10 == 0:
         print(f"Epoch {epoch+1:3d}: avg_loss={avg_loss:.4f}")
 
-print(f"\nLearned weights: {model.weight.data.numpy().flatten()}")
-print(f"True weights:    [2.0, 3.0, -1.0]")
-print(f"Learned bias:    {model.bias.item():.4f}")
-print(f"True bias:       0.5")
+print(f"\nLearned weights (normalized scale): {model.weight.data.numpy().flatten()}")
+print(f"Learned bias: {model.bias.item():.4f}")
 
 # ============================================================
 # 3. Tracking Training History
@@ -93,9 +103,9 @@ print("\n=== Training with History ===\n")
 
 torch.manual_seed(0)
 
-# Fresh model
+# Fresh model with a hidden layer
 model = nn.Sequential(
-    nn.Linear(3, 16),
+    nn.Linear(8, 16),
     nn.ReLU(),
     nn.Linear(16, 1),
 )
@@ -136,7 +146,7 @@ print(f"Train: {X_train.shape[0]} samples")
 print(f"Val:   {X_val.shape[0]} samples")
 
 # Fresh model
-model = nn.Linear(3, 1)
+model = nn.Linear(8, 1)
 optimizer = torch.optim.SGD(model.parameters(), lr=0.01)
 loss_fn = nn.MSELoss()
 
@@ -182,11 +192,9 @@ starts increasing (overfitting). Here's the logic:
             best_val_loss = val_loss
             counter = 0
             # Save best model weights
-            best_weights = model.state_dict().copy()
         else:
             counter += 1
             if counter >= patience:
                 print("Early stopping!")
-                model.load_state_dict(best_weights)
                 break
 """)
