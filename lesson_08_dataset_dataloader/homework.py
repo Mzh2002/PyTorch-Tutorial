@@ -2,11 +2,14 @@
 Lesson 08 Homework: Dataset and DataLoader
 ============================================
 Complete the TODOs below.
+
+Dataset: Iris (from sklearn) — 4 features, 3 flower species
 """
 
 import torch
 import torch.nn as nn
 from torch.utils.data import Dataset, DataLoader, random_split
+from sklearn.datasets import load_iris
 
 torch.manual_seed(8)
 
@@ -14,16 +17,16 @@ torch.manual_seed(8)
 # Exercise 1: Create a Custom Dataset
 # ============================================================
 
-# TODO: Create a Dataset class called QuadraticDataset
-# - In __init__, generate 200 samples:
-#     X = random values in [-3, 3], shape [200, 1]
-#     y = X^2 + noise (noise scale 0.2), shape [200, 1]
+# TODO: Create a Dataset class called IrisDataset
+# - In __init__, load the Iris dataset from sklearn:
+#     iris = load_iris()
+#     Store X as float32 tensor and y as long tensor
 # - Implement __len__ and __getitem__
 
 
-class QuadraticDataset(Dataset):
+class IrisDataset(Dataset):
     def __init__(self):
-        # TODO: Generate X and y
+        # TODO: Load Iris data and store as tensors
         pass
 
     def __len__(self):
@@ -42,24 +45,24 @@ class QuadraticDataset(Dataset):
 # TODO: Instantiate the dataset
 dataset = None
 
-# TODO: Split into 160 train and 40 validation samples
+# TODO: Split into 120 train and 30 validation samples
 train_dataset = None
 val_dataset = None
 
-# TODO: Create DataLoader for training (batch_size=32, shuffle=True)
+# TODO: Create DataLoader for training (batch_size=16, shuffle=True)
 train_loader = None
 
-# TODO: Create DataLoader for validation (batch_size=32, shuffle=False)
+# TODO: Create DataLoader for validation (batch_size=16, shuffle=False)
 val_loader = None
 
 # ============================================================
-# Exercise 3: Train a Model Using DataLoaders
+# Exercise 3: Train a Classifier Using DataLoaders
 # ============================================================
 
-# TODO: Define a model: Linear(1, 32) -> ReLU -> Linear(32, 1)
+# TODO: Define a model: Linear(4, 16) -> ReLU -> Linear(16, 3)
 model = None
 
-# TODO: Define MSE loss and Adam optimizer (lr=0.01)
+# TODO: Define CrossEntropyLoss and Adam optimizer (lr=0.01)
 loss_fn = None
 optimizer = None
 
@@ -77,14 +80,13 @@ for epoch in range(num_epochs):
 print("\n--- Checking your answers ---")
 
 assert dataset is not None, "Exercise 1: dataset not created"
-assert len(dataset) == 200, f"Exercise 1: expected 200 samples, got {len(dataset)}"
+assert len(dataset) == 150, f"Exercise 1: expected 150 samples, got {len(dataset)}"
 
 sample_x, sample_y = dataset[0]
-assert sample_x.shape == (1,), f"Exercise 1: X should be shape (1,), got {sample_x.shape}"
-assert sample_y.shape == (1,), f"Exercise 1: y should be shape (1,), got {sample_y.shape}"
+assert sample_x.shape == (4,), f"Exercise 1: X should be shape (4,), got {sample_x.shape}"
 
-assert train_dataset is not None and len(train_dataset) == 160, "Exercise 2: train split wrong"
-assert val_dataset is not None and len(val_dataset) == 40, "Exercise 2: val split wrong"
+assert train_dataset is not None and len(train_dataset) == 120, "Exercise 2: train split wrong"
+assert val_dataset is not None and len(val_dataset) == 30, "Exercise 2: val split wrong"
 assert train_loader is not None, "Exercise 2: train_loader not created"
 assert val_loader is not None, "Exercise 2: val_loader not created"
 

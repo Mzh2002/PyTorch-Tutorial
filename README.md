@@ -69,7 +69,12 @@ python lesson_01_tensors/answer.py
 
 ## Datasets
 
-- Lessons 01–08 use small toy/synthetic datasets (no download required).
+- Lessons 01–03 use small tensors for demonstrating PyTorch mechanics (no download required).
+- Lessons 04–08 use **real datasets from scikit-learn**:
+  - **California Housing** — housing prices from the 1990 US Census (fetched from the internet on first run).
+  - **Diabetes** — disease progression from 442 diabetes patients.
+  - **Wine** — chemical analysis of 178 wines from three cultivars.
+  - **Iris** — measurements of 150 iris flowers from three species.
 - Lessons 09–14 use **FashionMNIST** which is automatically downloaded by `torchvision` on first run (~30 MB).
 
 ## Project Layout
